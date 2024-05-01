@@ -20,30 +20,32 @@ public abstract class Game<TGamePlayer>
     // Public - can be accessed externally
     public void Play()
     {
-        for (int i = 0; i < GetNumRounds(); i++)
+        bool gameEnded = false;
+        int roundIndex = 0;
+        while (!gameEnded)
         {
-            PlayRound(i);
+            gameEnded = PlayRoundAndReturnIfGameEnded(roundIndex);
+            roundIndex++;
         }
-        
-        // Show winner
-        Console.Clear();
-        ShowGameStats(true, 0, players, _firstPlayerIndexThisTrick, new List<Card>());
+        AfterGameLoop();
 
-        if (winnerPlayersI.Count == 0)
+        List<TGamePlayer> winners = GetWinners();
+        
+        if (winners.Count == 0)
         {
             Console.Write("Nobody");
         } 
-        else if (winnerPlayersI.Count == 1)
+        else if (winners.Count == 1)
         {
-            Console.Write($"**{players[winnerPlayersI[0]].GetName()}**");
+            Console.Write($"**{winners[0].GetName()}**");
         }
         else
         {
-            for (int i = 0; i < winnerPlayersI.Count-2; i++)
+            for (int i = 0; i < winners.Count-2; i++)
             {
-                Console.Write($"**{players[i].GetName()}**, ");
+                Console.Write($"**{winners[i].GetName()}**, ");
             }
-            Console.Write($"**{players[winnerPlayersI.Count-2].GetName()}** and **{players[winnerPlayersI.Last()].GetName()}**");
+            Console.Write($"**{winners[winners.Count-2].GetName()}** and **{winners.Last().GetName()}**");
         }
         Console.WriteLine(" won the most tricks, and therefore won the game!");
         Console.WriteLine("Press any key.");
@@ -62,7 +64,20 @@ public abstract class Game<TGamePlayer>
     }
     
     // Abstract - overriden in subclasses via polymorphism
-    protected abstract void PlayRound(int roundIndex);
-    protected abstract int GetNumRounds();
+    
+    /**
+     * Play one round in the main game loop and return true if this is the last round, and false if it is not.
+     */
+    protected abstract bool PlayRoundAndReturnIfGameEnded(int roundIndex);
+    
+    /**
+     * Run some code after the main game loop, often to show the final game standings. There's no need to show the
+     * winner here - the Game class will handle it.
+     */
+    protected abstract void AfterGameLoop();
+    
+    /**
+     * Return the list of winners of the game, run after PlayRoundAndReturnIfGameEnded returns true.
+     */
     protected abstract List<TGamePlayer> GetWinners();
 }

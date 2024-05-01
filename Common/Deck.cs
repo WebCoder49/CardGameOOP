@@ -40,10 +40,11 @@ public class Deck
     // Setters
     public void Shuffle()
     {
-        Random rnd = new Random();
-        for (int firstCardI = 0; firstCardI < _cards.Count-1; firstCardI++)
+        Random rand = new Random();
+        // https://www.geeksforgeeks.org/shuffle-a-given-array-using-fisher-yates-shuffle-algorithm/
+        for (int firstCardI = _cards.Count-1; firstCardI >= 0; firstCardI--)
         {
-            int secondCardI = rnd.Next(firstCardI + 1, _cards.Count - 1);
+            int secondCardI = rand.Next(0, firstCardI+1);
             
             // Swap cards at firstCardI, secondCardI
             Card oldSecondCard = _cards[secondCardI];

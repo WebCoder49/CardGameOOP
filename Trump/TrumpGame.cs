@@ -2,6 +2,9 @@
 
 namespace On20240313OOPCardGame.Trump;
 
+/**
+ * https://www.ameerbacchus.com/trump/trumprules.html, but the Trump suit is chosen randomly.
+ */
 public class TrumpGame : Game<TrumpPlayer>
 {
     private Suit _trumps;
@@ -36,8 +39,8 @@ public class TrumpGame : Game<TrumpPlayer>
                 break;
         }
     }
-
-    protected override void PlayRound(int roundIndex)
+    
+    protected override bool PlayRoundAndReturnIfGameEnded(int roundIndex)
     {
         // Run a round of the game.
         
@@ -49,7 +52,7 @@ public class TrumpGame : Game<TrumpPlayer>
             
         // First player
         players[_firstPlayerIndexThisTrick].StartConsole();
-        ShowGameStats(false, roundIndex, players, _firstPlayerIndexThisTrick, new List<Card>());
+        ShowTrumpStats(false, roundIndex, players, _firstPlayerIndexThisTrick, new List<Card>());
         List<Card> cardsPlayedThisTrick = new List<Card> { players[_firstPlayerIndexThisTrick].RunFirstTurn() };
         Suit suitThisTrick = cardsPlayedThisTrick[0].GetSuit();
             
@@ -57,7 +60,7 @@ public class TrumpGame : Game<TrumpPlayer>
         for(int playerI = (_firstPlayerIndexThisTrick + 1) % players.Count; playerI != _firstPlayerIndexThisTrick; playerI = (playerI+1)%players.Count)
         {
             players[playerI].StartConsole();
-            ShowGameStats(false, roundIndex, players, _firstPlayerIndexThisTrick, cardsPlayedThisTrick);
+            ShowTrumpStats(false, roundIndex, players, _firstPlayerIndexThisTrick, cardsPlayedThisTrick);
                 
             cardsPlayedThisTrick.Add(players[playerI].RunTurn(suitThisTrick, cardsPlayedThisTrick));
         }
@@ -67,17 +70,45 @@ public class TrumpGame : Game<TrumpPlayer>
         players[winnerPlayerI].AddTrick();
             
         Console.Clear();
-        ShowGameStats(false, roundIndex, players, _firstPlayerIndexThisTrick, cardsPlayedThisTrick);
+        ShowTrumpStats(false, roundIndex, players, _firstPlayerIndexThisTrick, cardsPlayedThisTrick);
         Console.WriteLine($"**{players[winnerPlayerI].GetName()}** won this trick - Let everyone know, then press any key.");
         Console.ReadKey();
+
+        if (roundIndex >= _numTricks)
+        {
+            return true;
+        }
             
         // Winner starts next trick
         _firstPlayerIndexThisTrick = winnerPlayerI;
+
+        return false;
     }
 
-    protected override int GetNumRounds()
+    protected override void AfterGameLoop()
     {
-        return _numTricks;
+        // Show final game stats
+        Console.Clear();
+        ShowTrumpStats(true, 0, this.GetPlayers(), _firstPlayerIndexThisTrick, new List<Card>());
+    }
+
+    private int GetWinnerIndex(List<Card> cardsPlayedThisTrick, Suit suitThisTrick)
+    {
+        // Get the index of the winner of the trick in cardsPlayed
+        int maxCardScore = GetCardScore(cardsPlayedThisTrick[0], suitThisTrick);
+        int winningCardIndex = 0;
+        
+        for (int i = 1; i < cardsPlayedThisTrick.Count; i++)
+        {
+            int cardScore = GetCardScore(cardsPlayedThisTrick[i], suitThisTrick);
+            if (cardScore > maxCardScore)
+            {
+                maxCardScore = cardScore;
+                winningCardIndex = i;
+            }
+        }
+        
+        return winningCardIndex;
     }
 
     protected override List<TrumpPlayer> GetWinners()
@@ -103,26 +134,7 @@ public class TrumpGame : Game<TrumpPlayer>
         return players;
     }
 
-    private int GetWinnerIndex(List<Card> cardsPlayedThisTrick, Suit suitThisTrick)
-    {
-        // Get the index of the winner of the trick in cardsPlayed
-        int maxCardScore = GetCardScore(cardsPlayedThisTrick[0], suitThisTrick);
-        int winningCardIndex = 0;
-        
-        for (int i = 1; i < cardsPlayedThisTrick.Count; i++)
-        {
-            int cardScore = GetCardScore(cardsPlayedThisTrick[i], suitThisTrick);
-            if (cardScore > maxCardScore)
-            {
-                maxCardScore = cardScore;
-                winningCardIndex = i;
-            }
-        }
-        
-        return winningCardIndex;
-    }
-
-    private void ShowGameStats(bool endedGame, int trickI, List<TrumpPlayer> players, int _firstPlayerIndexThisTrick, List<Card> cardsPlayedThisTrick)
+    private void ShowTrumpStats(bool endedGame, int trickI, List<TrumpPlayer> players, int _firstPlayerIndexThisTrick, List<Card> cardsPlayedThisTrick)
     {
         if (endedGame)
         {
